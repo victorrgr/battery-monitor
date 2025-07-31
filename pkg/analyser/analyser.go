@@ -23,7 +23,7 @@ func Analyze(db *sql.DB) {
 		data.Percents = append(data.Percents, float64(entry.Percent))
 	}
 
-	tmpl, err := template.ParseFiles("templates/report.tmpl")
+	tmpl, err := template.ParseFiles("templates/report.gohtml")
 	if err != nil {
 		log.Fatal("Template parsing error:", err)
 	}

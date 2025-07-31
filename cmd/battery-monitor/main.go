@@ -10,7 +10,7 @@ import (
 func closeDatabase(db *sql.DB) {
 	err := db.Close()
 	if err != nil {
-		log.Fatal("Wasn't able to properly close database", err)
+		log.Fatal("Wasn't able to properly close database connection", err)
 	}
 }
 
