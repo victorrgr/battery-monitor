@@ -3,8 +3,7 @@ package main
 import (
 	"database/sql"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/victorrgr/battery-monitor/pkg/migrations"
-	"github.com/victorrgr/battery-monitor/pkg/monitor"
+	"github.com/victorrgr/battery-monitor/pkg/analyser"
 	"log"
 )
 
@@ -23,6 +22,7 @@ func main() {
 	}
 	defer closeDatabase(db)
 
-	migrations.Run(db)
-	monitor.Start(db)
+	//migrations.Run(db)
+	//monitor.Start(db)
+	analyser.Analyze(db)
 }

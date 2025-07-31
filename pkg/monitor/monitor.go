@@ -36,7 +36,7 @@ func Start(db *sql.DB) {
 		energyFull := parseInt32(readBatteryField("energy_full"))
 		percent := float32(energyNow) / float32(energyFull) * 100
 
-		status, err := parseStatus(readBatteryField("status"))
+		status, err := ParseStatus(readBatteryField("status"))
 		if err != nil {
 			log.Fatal("Error parsing battery status")
 		}
@@ -54,7 +54,7 @@ func Start(db *sql.DB) {
 	}
 }
 
-func parseStatus(s string) (Status, error) {
+func ParseStatus(s string) (Status, error) {
 	switch s {
 	case string(CHARGING):
 		return CHARGING, nil
