@@ -6,7 +6,7 @@ Records battery usage to a SQLite database so it can be analysed after.
 - GO version `1.25`
 
 ## Ubuntu
-`curl -sSfL https://raw.githubusercontent.com/victorrgr/battery-monitor/main/install.sh | bash
+`curl -sSfL https://raw.githubusercontent.com/victorrgr/battery-monitor/master/install.sh | bash
 `
 
 ## Build
