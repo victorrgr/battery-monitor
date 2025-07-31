@@ -20,7 +20,7 @@ echo "🖥 Creating autostart desktop entry..."
 cat > "$DESKTOP_FILE" <<EOF
 [Desktop Entry]
 Type=Application
-Exec=$INSTALL_DIR/$BINARY_NAME
+Exec=$INSTALL_DIR/$BINARY_NAME monitor
 Hidden=false
 NoDisplay=false
 X-GNOME-Autostart-enabled=true
@@ -29,5 +29,5 @@ Comment=Monitors battery usage in background
 EOF
 
 echo "✅ Installed to: $INSTALL_DIR/$BINARY_NAME"
-echo "✅ Autostart file: $DESKTOP_FILE"
-echo "📈 You can now run \`$BINARY_NAME analyse\` from your terminal."
+echo "✅ Autostart file created: $DESKTOP_FILE"
+echo "📈 Run \`$BINARY_NAME analyse\` from the terminal to generate a battery report."
