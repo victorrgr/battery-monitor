@@ -9,7 +9,7 @@ func Run(db *sql.DB) {
 	_, err := db.Exec(`
         CREATE TABLE IF NOT EXISTS battery_log (
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-            percent INTEGER,
+            percent FLOAT,
             status TEXT
         )
     `)
