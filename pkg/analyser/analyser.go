@@ -25,7 +25,7 @@ func Analyze(db *sql.DB) {
 
 	tmpl, err := template.ParseFiles("templates/report.gohtml")
 	if err != nil {
-		log.Fatal("Template parsing error:", err)
+		log.Fatal("Template parsing error: ", err)
 	}
 
 	file, err := os.Create("report.html")
@@ -41,7 +41,7 @@ func Analyze(db *sql.DB) {
 
 	err = tmpl.Execute(file, data)
 	if err != nil {
-		log.Fatal("Error executing template:", err)
+		log.Fatal("Error executing template: ", err)
 	}
 
 	log.Println("Generated report.html")
@@ -50,7 +50,7 @@ func Analyze(db *sql.DB) {
 func searchData(db *sql.DB) []monitor.BatteryLog {
 	res, err := db.Query("SELECT timestamp, percent, status FROM battery_log")
 	if err != nil {
-		log.Fatal("Error searching data", err)
+		log.Fatal("Error searching data: ", err)
 	}
 
 	var list []monitor.BatteryLog
@@ -60,11 +60,11 @@ func searchData(db *sql.DB) []monitor.BatteryLog {
 		var status string
 		err := res.Scan(&timestamp, &percent, &status)
 		if err != nil {
-			log.Fatal("Error scanning fields from response", err)
+			log.Fatal("Error scanning fields from response: ", err)
 		}
 		parseStatus, err := monitor.ParseStatus(status)
 		if err != nil {
-			log.Fatal("Error on parsing status", err)
+			log.Fatal("Error on parsing status: ", err)
 		}
 		list = append(list, monitor.BatteryLog{
 			Timestamp: timestamp,

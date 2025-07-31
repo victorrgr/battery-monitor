@@ -5,12 +5,32 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/victorrgr/battery-monitor/pkg/analyser"
 	"github.com/victorrgr/battery-monitor/pkg/migrations"
 	"github.com/victorrgr/battery-monitor/pkg/monitor"
 )
+
+func getDatabasePath() (string, error) {
+	dataDir := os.Getenv("XDG_DATA_HOME")
+	if dataDir == "" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		dataDir = filepath.Join(home, ".local", "share")
+	}
+
+	dbDir := filepath.Join(dataDir, "battery-monitor")
+	err := os.MkdirAll(dbDir, 0755)
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(dbDir, "battery-monitor.db"), nil
+}
 
 func closeDatabase(db *sql.DB) {
 	err := db.Close()
@@ -24,7 +44,11 @@ func main() {
 		fmt.Println("usage: battery-monitor [monitor|analyze|migrate]")
 		return
 	}
-	db, err := sql.Open("sqlite3", "./battery-monitor.db")
+	dataSourceName, err := getDatabasePath()
+	if err != nil {
+		log.Fatal("Error determining database path location", err)
+	}
+	db, err := sql.Open("sqlite3", dataSourceName)
 	if err != nil {
 		log.Fatal("Error on opening connection to the database", err)
 	}
