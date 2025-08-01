@@ -3,6 +3,7 @@ package analyser
 import (
 	"database/sql"
 	"github.com/victorrgr/battery-monitor/pkg/monitor"
+	"github.com/victorrgr/battery-monitor/templates"
 	"html/template"
 	"log"
 	"os"
@@ -23,7 +24,7 @@ func Analyze(db *sql.DB) {
 		data.Percents = append(data.Percents, float64(entry.Percent))
 	}
 
-	tmpl, err := template.ParseFiles("templates/report.gohtml")
+	tmpl, err := template.ParseFS(templates.Files, "report.gohtml")
 	if err != nil {
 		log.Fatal("Template parsing error: ", err)
 	}

@@ -70,7 +70,7 @@ func ParseStatus(s string) (Status, error) {
 func parseInt32(str string) int32 {
 	parsed, err := strconv.ParseInt(str, 10, 32)
 	if err != nil {
-		log.Fatalf("Error to parse value \"%s\": %s\n", err)
+		log.Fatalf("Error to parse value \"%s\": %v\n", str, err)
 	}
 	return int32(parsed)
 }
