@@ -34,16 +34,8 @@ systemctl --user status battery-monitor.service
 
 ## Uninstall
 
-### Current version (systemd):
-
 ```bash
 curl -sSfL https://raw.githubusercontent.com/victorrgr/battery-monitor/master/uninstall.sh | bash
-```
-
-### Legacy version (.desktop file):
-
-```bash
-curl -sSfL https://raw.githubusercontent.com/victorrgr/battery-monitor/master/uninstall-legacy.sh | bash
 ```
 
 ## Build from Source
