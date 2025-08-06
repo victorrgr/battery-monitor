@@ -1,7 +1,3 @@
-// ==============================
-// Globals & Constants
-// ==============================
-
 let batteryChart = null;
 let currentPage = 0;
 let totalPages = 0;
@@ -204,13 +200,9 @@ async function fetchDates() {
 
         const result = await response.json();
 
-        if (Array.isArray(result)) {
-            updateDateSelector(result);
-            totalPages = currentPage + 1;
-        } else {
-            updateDateSelector(result.dates || []);
-            totalPages = result.totalPages || 1;
-        }
+        // Handle new format: { dates: [...], totalPages, totalItems }
+        updateDateSelector(result.dates || []);
+        totalPages = result.totalPages || 1;
 
         updatePageInfo();
         updatePaginationButtons();
@@ -225,10 +217,10 @@ async function fetchDates() {
         const selector = document.getElementById('dateSelector');
         selector.innerHTML = '<option value="">No dates available</option>';
     } finally {
-        // ✅ Fix: end loading first
+        // ✅ End loading first
         hideLoading();
 
-        // ✅ Then safely trigger chart rendering
+        // ✅ Then trigger chart render if a date is selected
         const selector = document.getElementById('dateSelector');
         if (selector.value) {
             fetchAndRenderData(selector.value);
@@ -264,9 +256,8 @@ function updateDateSelector(dates) {
         selector.appendChild(option);
     });
 
-    // Select the most recent date
-    const mostRecentDate = dates[dates.length - 1];
-    selector.value = mostRecentDate;
+    // Select most recent date
+    selector.value = dates[dates.length - 1];
 }
 
 // ==============================

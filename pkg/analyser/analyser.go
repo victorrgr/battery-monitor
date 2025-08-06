@@ -3,6 +3,7 @@ package analyser
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"github.com/victorrgr/battery-monitor/pkg/monitor"
 	"github.com/victorrgr/battery-monitor/pkg/system"
 	"github.com/victorrgr/battery-monitor/pkg/utils"
@@ -104,12 +105,12 @@ func datesHandler(db *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 		}
 
 		offset := (page - 1) * size
-		dates, err := searchDates(db, size, offset)
+		datesRes, err := searchDates(db, size, offset)
 		if err != nil {
 			sendInternalServerError(w, "Error Fetching Data: "+err.Error())
 		}
 
-		marshal, err := json.Marshal(dates)
+		marshal, err := json.Marshal(datesRes)
 		if err != nil {
 			msg := "Error Transforming to JSON: " + err.Error()
 			_, _ = w.Write([]byte(msg))
@@ -120,28 +121,53 @@ func datesHandler(db *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func searchDates(db *sql.DB, size int32, offset int32) ([]string, error) {
-	query := `
-	SELECT DATE(DATETIME("timestamp", 'localtime')) AS day FROM battery_log
-	GROUP BY day
-	ORDER BY day
-	LIMIT ? OFFSET ?
+type DatesResponse struct {
+	Dates      []string `json:"dates"`
+	TotalItems int      `json:"totalItems"`
+	TotalPages int      `json:"totalPages"`
+}
+
+func searchDates(db *sql.DB, size int32, offset int32) (DatesResponse, error) {
+	var response DatesResponse
+	countQuery := `
+		SELECT COUNT(*) FROM (
+			SELECT DATE(DATETIME("timestamp", 'localtime')) AS day
+			FROM battery_log
+			GROUP BY day
+		)
 	`
-	res, err := db.Query(query, size, offset)
+	err := db.QueryRow(countQuery).Scan(&response.TotalItems)
 	if err != nil {
-		return nil, err
+		return response, fmt.Errorf("error counting total items: %w", err)
 	}
 
-	var dates []string
-	for res.Next() {
-		var timestamp string
-		err := res.Scan(&timestamp)
-		if err != nil {
-			log.Fatal("Error scanning fields from response: ", err)
-		}
-		dates = append(dates, timestamp)
+	if size > 0 {
+		response.TotalPages = (response.TotalItems + int(size) - 1) / int(size)
+	} else {
 	}
-	return dates, nil
+
+	// 3. Fetch paginated dates
+	query := `
+		SELECT DATE(DATETIME("timestamp", 'localtime')) AS day
+		FROM battery_log
+		GROUP BY day
+		ORDER BY day
+		LIMIT ? OFFSET ?
+	`
+	rows, err := db.Query(query, size, offset)
+	if err != nil {
+		return response, fmt.Errorf("error querying paginated dates: %w", err)
+	}
+
+	for rows.Next() {
+		var day string
+		if err := rows.Scan(&day); err != nil {
+			return response, fmt.Errorf("error scanning date: %w", err)
+		}
+		response.Dates = append(response.Dates, day)
+	}
+
+	return response, nil
 }
 
 func sample(list []monitor.BatteryLog, maxPoints int) []monitor.BatteryLog {

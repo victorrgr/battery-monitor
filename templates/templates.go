@@ -6,4 +6,5 @@ import "embed"
 //
 //go:embed report.html
 //go:embed index.js
+//go:embed style.css
 var Files embed.FS
