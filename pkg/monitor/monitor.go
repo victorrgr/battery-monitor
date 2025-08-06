@@ -3,9 +3,9 @@ package monitor
 import (
 	"database/sql"
 	"fmt"
+	"github.com/victorrgr/battery-monitor/pkg/utils"
 	"log"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -19,9 +19,9 @@ const (
 )
 
 type BatteryLog struct {
-	Timestamp time.Time
-	Percent   float32
-	Status    Status
+	Timestamp time.Time `json:"timestamp"`
+	Percent   float32   `json:"percent"`
+	Status    Status    `json:"status"`
 }
 
 var running = false
@@ -32,8 +32,8 @@ func Start(db *sql.DB) {
 	running = true
 	for running {
 		// TODO: Gather data and save to the database
-		energyNow := parseInt32(readBatteryField("energy_now"))
-		energyFull := parseInt32(readBatteryField("energy_full"))
+		energyNow, _ := utils.ParseInt32(readBatteryField("energy_now"))
+		energyFull, _ := utils.ParseInt32(readBatteryField("energy_full"))
 		percent := float32(energyNow) / float32(energyFull) * 100
 
 		status, err := ParseStatus(readBatteryField("status"))
@@ -65,14 +65,6 @@ func ParseStatus(s string) (Status, error) {
 	default:
 		return "", fmt.Errorf("invalid status: %s", s)
 	}
-}
-
-func parseInt32(str string) int32 {
-	parsed, err := strconv.ParseInt(str, 10, 32)
-	if err != nil {
-		log.Fatalf("Error to parse value \"%s\": %v\n", str, err)
-	}
-	return int32(parsed)
 }
 
 func readBatteryField(field string) string {

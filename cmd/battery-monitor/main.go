@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"github.com/victorrgr/battery-monitor/pkg/system"
 	"log"
 	"os"
 	"path/filepath"
@@ -14,15 +15,7 @@ import (
 )
 
 func getDatabasePath() (string, error) {
-	dataDir := os.Getenv("XDG_DATA_HOME")
-	if dataDir == "" {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return "", err
-		}
-		dataDir = filepath.Join(home, ".local", "share")
-	}
-
+	dataDir := system.GetSharedLocalDir()
 	dbDir := filepath.Join(dataDir, "battery-monitor")
 	err := os.MkdirAll(dbDir, 0755)
 	if err != nil {
