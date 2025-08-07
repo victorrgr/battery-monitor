@@ -18,6 +18,12 @@ curl -sSfL https://raw.githubusercontent.com/victorrgr/battery-monitor/master/in
 
 This installs the binary to `~/.local/bin`, creates a systemd user service, and enables it.
 
+To update an existing installation, run the installer again with the --update flag:
+
+```bash
+curl -sSfL https://raw.githubusercontent.com/victorrgr/battery-monitor/master/install.sh | bash -s -- --update
+```
+
 ## Usage
 
 ```bash
