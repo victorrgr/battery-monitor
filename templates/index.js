@@ -248,7 +248,7 @@ function updateDateSelector(dates) {
         const option = document.createElement('option');
         option.value = date;
 
-        const formattedDate = new Date(date).toLocaleDateString([], {
+        const formattedDate = new Date(date+" ").toLocaleDateString([], {
             weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
         });
 
@@ -257,7 +257,7 @@ function updateDateSelector(dates) {
     });
 
     // Select most recent date
-    selector.value = dates[dates.length - 1];
+    selector.value = dates[0];
 }
 
 // ==============================

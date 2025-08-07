@@ -3,9 +3,9 @@ package monitor
 import (
 	"database/sql"
 	"fmt"
-	"github.com/victorrgr/battery-monitor/pkg/utils"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -32,8 +32,8 @@ func Start(db *sql.DB) {
 	running = true
 	for running {
 		// TODO: Gather data and save to the database
-		energyNow, _ := utils.ParseInt32(readBatteryField("energy_now"))
-		energyFull, _ := utils.ParseInt32(readBatteryField("energy_full"))
+		energyNow, _ := strconv.Atoi(readBatteryField("energy_now"))
+		energyFull, _ := strconv.Atoi(readBatteryField("energy_full"))
 		percent := float32(energyNow) / float32(energyFull) * 100
 
 		status, err := ParseStatus(readBatteryField("status"))

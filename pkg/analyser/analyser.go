@@ -3,16 +3,18 @@ package analyser
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/victorrgr/battery-monitor/pkg/monitor"
 	"github.com/victorrgr/battery-monitor/pkg/system"
-	"github.com/victorrgr/battery-monitor/pkg/utils"
 	"github.com/victorrgr/battery-monitor/templates"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
+	"syscall"
 	"time"
 )
 
@@ -20,29 +22,29 @@ type Data struct {
 	List []monitor.BatteryLog
 }
 
-func Analyze(db *sql.DB) {
+func Analyze(db *sql.DB, port int) {
 	http.Handle("/", http.FileServer(http.FS(templates.Files)))
 	http.HandleFunc("/dates", datesHandler(db))
 	http.HandleFunc("/data", dataHandler(db))
-	log.Println("Opening Server at 8080")
-	exec.Command("xdg-open", "http://localhost:8080/report.html")
-	err := http.ListenAndServe(":8080", nil)
+	host := fmt.Sprintf("localhost:%d", port)
+	log.Printf("Web server starting at http://%s\n", host)
+	exec.Command("xdg-open", fmt.Sprintf("http://%s", host))
+	err := http.ListenAndServe(host, nil)
 	if err != nil {
-		log.Fatal("Unable to open server at port 8080", err)
+		if errors.Is(err, syscall.EADDRINUSE) {
+			log.Fatalf("Port %d already in use", port)
+		}
+		log.Fatalf("Unable to open web server at port %d: %s", port, err)
 	}
-
-	//list := searchData(db)
-	//list = sample(list, 100)
-	//generateReport(Data{List: list})
-	//log.Println("Generated report.html")
 }
 
 func dataHandler(db *sql.DB) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var err error
 		var date = time.Now()
-		if r.URL.Query().Has("date") {
-			date, err = time.Parse("2006-01-02", r.URL.Query().Get("date"))
+		query := r.URL.Query()
+		if query.Has("date") {
+			date, err = time.Parse("2006-01-02", query.Get("date"))
 			if err != nil {
 				sendBadRequest(w, `Invalid date format for query param "date": `+err.Error())
 				return
@@ -54,10 +56,16 @@ func dataHandler(db *sql.DB) func(http.ResponseWriter, *http.Request) {
 		marshal, err := json.Marshal(list)
 		if err != nil {
 			msg := "Error Transforming to JSON: " + err.Error()
-			_, _ = w.Write([]byte(msg))
+			_, err = w.Write([]byte(msg))
+			if err != nil {
+				log.Println("[ERROR] Writing error response: ", err)
+			}
 		}
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write(marshal)
+		_, err = w.Write(marshal)
+		if err != nil {
+			log.Println("[ERROR] Writing error response: ", err)
+		}
 	}
 }
 
@@ -86,48 +94,73 @@ func sendError(w http.ResponseWriter, msg string, statusCode int) {
 func datesHandler(db *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var err error
-		var page int32 = 0
+		var page = 0
 		query := r.URL.Query()
 		if query.Has("page") {
-			page, err = utils.ParseInt32(query.Get("page"))
+			page, err = strconv.Atoi(query.Get("page"))
 			if err != nil {
 				sendBadRequest(w, `Error Parsing Request Param "page": `+err.Error())
 				return
 			}
+			if page < 0 {
+				sendBadRequest(w, `Request Param "page" cannot be less than 0`)
+				return
+			}
 		}
-		var size int32 = 5
+		var size = 5
 		if query.Has("size") {
-			size, err = utils.ParseInt32(query.Get("size"))
+			size, err = strconv.Atoi(query.Get("size"))
 			if err != nil {
 				sendBadRequest(w, `Error Parsing Request Param "page": `+err.Error())
+				return
+			}
+			if size < 0 {
+				sendBadRequest(w, `Request Param "size" cannot be less than 0`)
+				return
+			}
+			if size == 0 {
+				sendBadRequest(w, `Request Param "size" cannot be equals to 0`)
 				return
 			}
 		}
 
-		offset := (page - 1) * size
+		offset := page * size
 		datesRes, err := searchDates(db, size, offset)
 		if err != nil {
 			sendInternalServerError(w, "Error Fetching Data: "+err.Error())
 		}
 
+		if datesRes.TotalPages == page {
+			sendError(w, "Requested page exceeds total available pages", http.StatusUnprocessableEntity)
+			return
+		}
+
 		marshal, err := json.Marshal(datesRes)
 		if err != nil {
 			msg := "Error Transforming to JSON: " + err.Error()
-			_, _ = w.Write([]byte(msg))
+			_, err = w.Write([]byte(msg))
+			if err != nil {
+				log.Println("[ERROR] Writing error response: ", err)
+				return
+			}
 		}
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write(marshal)
+		_, err = w.Write(marshal)
+		if err != nil {
+			log.Println("[ERROR] Writing error response: ", err)
+			return
+		}
 	}
 }
 
 type DatesResponse struct {
-	Dates      []string `json:"dates"`
-	TotalItems int      `json:"totalItems"`
 	TotalPages int      `json:"totalPages"`
+	TotalItems int      `json:"totalItems"`
+	Dates      []string `json:"dates"`
 }
 
-func searchDates(db *sql.DB, size int32, offset int32) (DatesResponse, error) {
+func searchDates(db *sql.DB, size int, offset int) (DatesResponse, error) {
 	var response DatesResponse
 	countQuery := `
 		SELECT COUNT(*) FROM (
@@ -142,16 +175,14 @@ func searchDates(db *sql.DB, size int32, offset int32) (DatesResponse, error) {
 	}
 
 	if size > 0 {
-		response.TotalPages = (response.TotalItems + int(size) - 1) / int(size)
-	} else {
+		response.TotalPages = (response.TotalItems + size - 1) / size
 	}
 
-	// 3. Fetch paginated dates
 	query := `
 		SELECT DATE(DATETIME("timestamp", 'localtime')) AS day
 		FROM battery_log
 		GROUP BY day
-		ORDER BY day
+		ORDER BY day DESC
 		LIMIT ? OFFSET ?
 	`
 	rows, err := db.Query(query, size, offset)
@@ -165,6 +196,10 @@ func searchDates(db *sql.DB, size int32, offset int32) (DatesResponse, error) {
 			return response, fmt.Errorf("error scanning date: %w", err)
 		}
 		response.Dates = append(response.Dates, day)
+	}
+
+	if response.Dates == nil {
+		response.Dates = make([]string, 0)
 	}
 
 	return response, nil
@@ -183,12 +218,12 @@ func sample(list []monitor.BatteryLog, maxPoints int) []monitor.BatteryLog {
 }
 
 func generateReport(data any) {
-	tmpl, err := template.ParseFS(templates.Files, "report.html")
+	tmpl, err := template.ParseFS(templates.Files, "index.html")
 	if err != nil {
 		log.Fatal("Template parsing error: ", err)
 	}
 
-	file, err := os.Create("report.html")
+	file, err := os.Create("index.html")
 	if err != nil {
 		log.Fatal("Could not create output file:", err)
 	}
@@ -231,4 +266,11 @@ func searchData(db *sql.DB, date time.Time) []monitor.BatteryLog {
 		})
 	}
 	return list
+}
+
+func AbsInt(n int) int {
+	if n < 0 {
+		return -n
+	}
+	return n
 }
