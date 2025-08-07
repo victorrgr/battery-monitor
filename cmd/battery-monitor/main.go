@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"flag"
 	"fmt"
 	"github.com/victorrgr/battery-monitor/pkg/system"
 	"log"
