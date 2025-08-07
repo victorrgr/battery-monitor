@@ -1,12 +1,12 @@
 # Battery Monitor
 
-A lightweight CLI tool that records battery usage into a local SQLite database and generates reports in HTML format.
+A lightweight CLI tool that records battery usage into a local SQLite database and exposes a web interface for viewing battery data.
 
 ## Features
 
 - Runs in the background after login
 - Logs battery percentage and status over time
-- Generates reports for historical analysis
+- Serves a local web dashboard for historical analysis
 
 ## Installation
 
@@ -22,9 +22,11 @@ This installs the binary to `~/.local/bin`, creates a systemd user service, and 
 
 ```bash
 battery-monitor monitor     # Start monitoring manually (optional)
-battery-monitor analyse     # Generate report.html in the current directory
-xdg-open report.html        # Open the report in a browser
+battery-monitor analyse     # Start the web server (default port: 8080)
 ```
+
+> To view the battery data UI, you must run the `analyse` command in your terminal.  
+> Once it's running, open [http://localhost:8080](http://localhost:8080) in your browser.
 
 Check service status:
 
@@ -54,7 +56,6 @@ curl -sSfL https://raw.githubusercontent.com/victorrgr/battery-monitor/master/un
 CGO_ENABLED=1 go build -ldflags="-s -w" -o bin/battery-monitor ./cmd/battery-monitor
 ```
 
-## Data and Reports
+## Data Location
 
-- Data: `~/.local/share/battery-monitor/battery-monitor.db`
-- Reports: `./report.html`
+- Battery data is stored in: `~/.local/share/battery-monitor/battery-monitor.db`

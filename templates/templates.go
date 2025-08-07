@@ -4,5 +4,7 @@ import "embed"
 
 // Files contains embedded templates.
 //
-//go:embed report.gohtml
+//go:embed index.html
+//go:embed index.js
+//go:embed styles.css
 var Files embed.FS

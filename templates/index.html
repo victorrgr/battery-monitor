@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <title>Battery Monitor Report</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css"> <!-- Optional if you extract styles -->
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🔋 Battery Monitor Report</h1>
+        <p class="mb-0 text-muted">Real-time battery performance tracking and analysis</p>
+    </div>
+
+    <div class="controls-panel">
+        <div class="date-selector-wrapper">
+            <label for="dateSelector" class="form-label mb-0">Select Date:</label>
+            <select id="dateSelector" class="form-select" style="max-width: 300px;">
+                <option value="">Select a date...</option>
+            </select>
+        </div>
+
+        <div class="pagination-controls">
+            <button class="btn btn-pagination" id="firstPage" title="Go to first page">«« First</button>
+            <button class="btn btn-pagination" id="prevPage" title="Previous page">‹ Previous</button>
+            <div class="pagination-info" id="pageInfo">Page 1</div>
+            <button class="btn btn-pagination" id="nextPage" title="Next page">Next ›</button>
+            <button class="btn btn-pagination" id="lastPage" title="Go to last page">Last »»</button>
+        </div>
+    </div>
+
+    <div class="error-message" id="errorMessage"></div>
+    <div class="loading-spinner" id="loadingSpinner">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Loading battery data...</p>
+    </div>
+
+    <div class="chart-container">
+        <div class="chart-wrapper">
+            <canvas id="batteryChart"></canvas>
+        </div>
+    </div>
+</div>
+<script src="index.js"></script>
+</body>
+</html>
