@@ -20,21 +20,25 @@ mkdir -p "$SYSTEMD_USER_DIR"
 if [ -f "$INSTALL_DIR/$BINARY_NAME" ]; then
     if [ "$FORCE_UPDATE" = true ]; then
         echo "⬇️ Updating $BINARY_NAME from GitHub Releases..."
+        if systemctl --user is-active --quiet "$BINARY_NAME.service"; then
+            echo "⏸ Stopping running service before update..."
+            systemctl --user stop "$BINARY_NAME.service"
+        fi
+
+        rm -f "$INSTALL_DIR/$BINARY_NAME"
         curl -sSfL "$DOWNLOAD_URL" -o "$INSTALL_DIR/$BINARY_NAME"
         chmod +x "$INSTALL_DIR/$BINARY_NAME"
         echo "✅ Updated $BINARY_NAME"
 
-        if systemctl --user is-active --quiet "$BINARY_NAME.service"; then
-            echo "🔄 Restarting running service..."
-            systemctl --user restart "$BINARY_NAME.service"
-            echo "✅ Service restarted"
-        elif systemctl --user is-enabled --quiet "$BINARY_NAME.service"; then
-            echo "🚀 Starting updated service..."
+        if systemctl --user is-enabled --quiet "$BINARY_NAME.service"; then
+            echo "🚀 Restarting service after update..."
             systemctl --user start "$BINARY_NAME.service"
+            echo "✅ Service restarted"
         fi
     else
         echo "✅ $BINARY_NAME is already installed. Use --update to force update."
     fi
+    exit 0
 else
     echo "⬇️ Downloading $BINARY_NAME from GitHub Releases..."
     curl -sSfL "$DOWNLOAD_URL" -o "$INSTALL_DIR/$BINARY_NAME"
