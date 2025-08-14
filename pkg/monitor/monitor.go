@@ -2,7 +2,6 @@ package monitor
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -16,6 +15,8 @@ const (
 	CHARGING     Status = "Charging"
 	DISCHARGING  Status = "Discharging"
 	NOT_CHARGING Status = "Not charging"
+	FULL         Status = "Full"
+	UNKNOWN      Status = "Unknown"
 )
 
 type BatteryLog struct {
@@ -62,8 +63,10 @@ func ParseStatus(s string) (Status, error) {
 		return DISCHARGING, nil
 	case string(NOT_CHARGING):
 		return NOT_CHARGING, nil
+	case string(FULL):
+		return FULL, nil
 	default:
-		return "", fmt.Errorf("invalid status: %s", s)
+		return UNKNOWN, nil
 	}
 }
 
